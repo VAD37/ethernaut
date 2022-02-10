@@ -26,5 +26,6 @@ async function main() {
   console.log("withdraw all");
   console.log("balances before:",await signer.provider?.getBalance(level));
   await fallout.withdraw();
+  await fallout.deployTransaction.wait(1);
   console.log("balances after:",await signer.provider?.getBalance(level));
 }

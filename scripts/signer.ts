@@ -6,6 +6,6 @@ export function getSigner(): Signer {
 
     const url = process.env.RINKEBY_URL;
     const customHttpProvider = new ethers.providers.JsonRpcProvider(url);
-    const privateKey = fs.readFileSync(".secret", "utf8");
+    const privateKey = process.env.PRIVATE_KEY || '';
     return new ethers.Wallet(privateKey, customHttpProvider);
 }
