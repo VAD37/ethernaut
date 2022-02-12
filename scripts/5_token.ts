@@ -12,7 +12,6 @@ async function main() {
   const supportAddress = "0x6995870D9890e10979aFCbDEA5d8D249e969822D";
   const contract = Token__factory.connect(instanceAddress, main);
 
-
   await SendOverflowNumber();
 
 
