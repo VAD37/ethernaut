@@ -2,6 +2,7 @@ pragma solidity ^0.8.0;
 
 contract ProxyCall {
     address public owner;
+    event ProxyResult(bool, bytes);
 
     modifier _onlyOwner() {
         require(msg.sender == owner, "Who are u?");
@@ -15,9 +16,10 @@ contract ProxyCall {
     function proxy(address _to, bytes calldata _data)
         public
         payable
-        _onlyOwner returns (bool,bytes memory)
+        _onlyOwner
     {
-        return _to.call{value: msg.value}(_data);
+        (bool success, bytes memory result) = _to.call{value: msg.value}(_data);
+        emit ProxyResult(success, result);
     }
 
     fallback() external payable {

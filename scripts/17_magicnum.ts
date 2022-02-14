@@ -1,15 +1,26 @@
 // Runtime Environment's members available in the global scope.
-import {ethers} from 'hardhat';
+import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
-
+import { MagicNumSolver__factory } from "../typechain";
+import { Interface } from 'ethers/lib/utils';
 
 async function main() {
-  // const instanceAddress = "0x9b46Fd46376e3D5606E0bb8Ac8f482090dBDC1C9";
-  // const signer = getSigner();
+  const instanceAddress = "0x3109AE583e54deb394612D9E7b986007a8D112AA";
+  const signer = getSigner();
+  console.log("deploying magic")
+  // const target = await (new MagicNumSolver__factory(signer)).deploy();
+  // await target.deployed();
+  const abi = [
+    "function setSolver(address _solver)",
+    "function whatIsTheMeaningOfLife()",
+  ];
+  const iface = new Interface(abi);
+  const data = iface.encodeFunctionData("whatIsTheMeaningOfLife", []);
+  console.log("calling setSolver")
+  console.log(data);
+  // await signer.sendTransaction({to: instanceAddress, data: data, gasLimit:950000});
 
-  
-  
 }
 
 main()
