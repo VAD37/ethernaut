@@ -2,15 +2,21 @@
 import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
-import { Dex__factory } from "../typechain";
+import { Dex__factory, SwappableToken__factory } from "../typechain";
 
 async function main() {
-  const instanceAddress = "0x86E3321F4f22D50517e10C369c54F312225B6c0b";
+  const instanceAddress = "0xa1157dc8973a12b981e58722802EeB132E58bbcc";
   const signer = getSigner();
 
   const dex = await (new Dex__factory(signer)).attach(instanceAddress);
   console.log("allow dex to transfer my money");
   await (await dex.approve(dex.address, ethers.constants.MaxUint256)).wait();
+  console.log("create new token");
+  const newToken = await new SwappableToken__factory(signer).deploy("newToken", "NT", 100000);
+  await newToken.deployed();
+  await (await newToken.approve(dex.address, ethers.constants.MaxUint256)).wait();
+
+
 
   const playerAddress = await signer.getAddress();
   const token1 = await dex.token1();
@@ -19,38 +25,39 @@ async function main() {
 
   const playerToken1Balance = async () => await dex.balanceOf(token1, playerAddress);
   const playerToken2Balance = async () => await dex.balanceOf(token2, playerAddress);
+  const playerToken3Balance = async () => await dex.balanceOf(newToken.address, playerAddress);
   const liquid1Balance = async () => await dex.balanceOf(token1, dex.address);
   const liquid2Balance = async () => await dex.balanceOf(token2, dex.address);
+  const liquid3Balance = async () => await dex.balanceOf(newToken.address, dex.address);
 
   while (true) {
 
     const liquid1 = await liquid1Balance();
     const liquid2 = await liquid2Balance();
+    const liquid3 = await liquid3Balance();
     const t1b = await playerToken1Balance();
     const t2b = await playerToken2Balance();
+    const t3b = await playerToken3Balance();
     console.log("liquid1: ", liquid1.toString());
     console.log("liquid2: ", liquid2.toString());
+    console.log("liquid3: ", liquid3.toString());
     console.log("balance of token1: ", t1b.toString());
     console.log("balance of token2: ", t2b.toString());
-    if (liquid1.isZero())
-      break;
-    else if (liquid2.isZero())
+    console.log("balance of newToken: ", t3b.toString());
+    if (liquid1.isZero() && liquid2.isZero())
       break;
 
-    if (t2b.gt(0)) {
-
-      console.log("swap 2 to 1")
-      let swapPrice = await dex.get_swap_price(token2, token1, t2b);
-      const maxSwap = liquid1.mul(t2b).div(swapPrice);
-      const swapAmount = maxSwap.gt(swapPrice) ? t2b : maxSwap;
-      await (await dex.swap(token2, token1, swapAmount, { gasLimit: 500000 })).wait();
+    if (liquid1.gt(0)) {
+      console.log("swap newToken for 1")
+      console.log("add liquidity");
+      await (await dex.add_liquidity(newToken.address, liquid1)).wait();
+      await (await dex.swap(newToken.address, token1, liquid1, { gasLimit: 500000 })).wait();
     }
-    else if (t1b.gt(0)) {
-      console.log("swap 1 to 2")
-      let swapPrice = await dex.get_swap_price(token1, token2, t1b);
-      const maxSwap = liquid2.mul(t1b).div(swapPrice);
-      const swapAmount = maxSwap.gt(swapPrice) ? t1b : maxSwap;
-      await (await dex.swap(token1, token2, swapAmount, { gasLimit: 500000 })).wait();
+    if (liquid2.gt(0)) {
+      console.log("swap newToken for 2")
+      console.log("add liquidity");
+      await (await dex.add_liquidity(newToken.address, liquid2)).wait();
+      await (await dex.swap(newToken.address, token2, liquid2, { gasLimit: 500000 })).wait();
     }
   }
 
