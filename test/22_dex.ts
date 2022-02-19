@@ -3,7 +3,7 @@ import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 
 describe("Dex one test", function () {
-  it.only("Swap 0 value coin get 0 price", async function () {
+  it("Swap 0 value coin get 0 price", async function () {
     const Token = await ethers.getContractFactory("SwappableToken");
     const DEX = await ethers.getContractFactory("Dex");
     const accs = await ethers.getSigners();
