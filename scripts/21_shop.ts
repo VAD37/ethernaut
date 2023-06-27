@@ -3,13 +3,15 @@ import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
 import { Shop__factory, BuyerFake__factory } from "../typechain";
+import { createLevel, submitLevel } from './utils';
 
 async function main() {
-  const instanceAddress = "0x885CEac4db2DB5F20707092E7ED5301388B988f2";
   const signer = getSigner();
+  const level =await createLevel(signer, "Shop");
 
-  const buyer = await (new BuyerFake__factory(signer)).deploy(instanceAddress);
+  const buyer = await (new BuyerFake__factory(signer)).deploy(level);
   await buyer.attack({gasLimit: 1000000});
+  await submitLevel(signer,level);
 }
 
 main()

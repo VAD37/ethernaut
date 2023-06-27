@@ -2,15 +2,18 @@
 import { ethers } from 'hardhat';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
+import { createLevel, submitLevel } from './utils';
 
 
 async function main() {
-  const instanceAddress = "0x7eAB5bEe77dd845301Ca4e1f154021ed95Fd689c";
   const signer = getSigner();
-
+  const level = await createLevel(signer, "gatekeeper two");
+  
   const Attacker = await ethers.getContractFactory("GateTwoAttacker");
-  const attacker = await Attacker.connect(signer).deploy(instanceAddress);
+  const attacker = await Attacker.connect(signer).deploy(level);
   await attacker.deployed();
+
+  await submitLevel(signer, level);
 
 }
 

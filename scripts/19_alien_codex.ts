@@ -3,12 +3,13 @@ import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
 import { AlienCodex__factory } from "../typechain";
+import { createLevel, submitLevel } from './utils';
 
 async function main() {
-  const instanceAddress = "0xc7aa6CFDFbDC5449b983666f2162013c6001e293";
   const signer = getSigner();
+  const level = await createLevel(signer,"alien codex")
 
-  const codex = await (AlienCodex__factory.connect(instanceAddress, signer)).deployed();
+  const codex = await (AlienCodex__factory.connect(level, signer)).deployed();
   const newOwnerAddress = await signer.getAddress();
   console.log("is contacted:", await codex.contact());
   await (await codex.make_contact()).wait();
@@ -28,6 +29,7 @@ async function main() {
   await (await codex.revise(bn.add(1)._hex, data)).wait();
 
   console.log("new owner:", await codex.owner());
+  await submitLevel(signer,level)
 }
 
 main()

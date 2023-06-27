@@ -2,14 +2,17 @@
 import { ethers } from "hardhat";
 import { getSigner } from "./signer";
 
-import { ProxyCall__factory } from "../typechain";
+import { createLevel, submitLevel } from "./utils";
 
 async function main() {
-  const instanceAddress = "0x677bf1202a4DfC76117e75fdb60E813876b55e26";
   const signer = getSigner();
+  const level = await createLevel(signer, "force");
   const suicide = await ethers.getContractFactory("Suicide");
-  const ct = await suicide.deploy(instanceAddress, {value: 100});
-  await ct.deployed();
+  const ct = await suicide.connect(signer).deploy(level, {value: 100});
+  const tx = await ct.deployed();
+  console.log("deploying ", ct.address);
+  
+  await submitLevel(signer,level);
 }
 main()
   .then(() => {

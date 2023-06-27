@@ -1,26 +1,26 @@
 // Runtime Environment's members available in the global scope.
 import { ethers } from 'ethers';
-import { BigNumber, Signer, BytesLike } from "ethers";
+// import {ethers} from 'hardhat';
+import { BigNumber, Signer, BytesLike, Contract } from "ethers";
 import { getSigner } from "./signer";
-import { MagicNumSolver__factory } from "../typechain";
-import { Interface } from 'ethers/lib/utils';
+import { MagicNumSolver__factory, MagicNum__factory } from "../typechain";
+import { createLevel, submitLevel } from './utils';
 
 async function main() {
-  const instanceAddress = "0x3109AE583e54deb394612D9E7b986007a8D112AA";
   const signer = getSigner();
-  console.log("deploying magic")
-  // const target = await (new MagicNumSolver__factory(signer)).deploy();
-  // await target.deployed();
-  const abi = [
-    "function setSolver(address _solver)",
-    "function whatIsTheMeaningOfLife()",
-  ];
-  const iface = new Interface(abi);
-  const data = iface.encodeFunctionData("whatIsTheMeaningOfLife", []);
-  console.log("calling setSolver")
-  console.log(data);
-  // await signer.sendTransaction({to: instanceAddress, data: data, gasLimit:950000});
+  // const signer = (await ethers.getSigners())[0];
 
+  const level = await createLevel(signer,"magic");
+  const magicNum = await MagicNum__factory.connect(level,signer);
+  
+  console.log("deploying magic")
+  const target = await (new MagicNumSolver__factory(signer)).deploy();
+  // await target.deployed();
+  
+  await magicNum.setSolver(target.address);
+  console.log("solver set")
+  // console.log("size: ", await magicNum.getCodeSize(target.address));
+  await submitLevel(signer,level);
 }
 
 main()

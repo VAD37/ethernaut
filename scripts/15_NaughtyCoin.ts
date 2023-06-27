@@ -4,11 +4,12 @@ import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
 import { NaughtyCoin__factory } from "../typechain/ethers-v5";
 import { NaughtyCoinAttacker__factory } from "../typechain";
+import { createLevel, submitLevel } from './utils';
 
 async function main() {
-  const instanceAddress = "0xF1071B3034a419dcA0AD5E6fd0CF7bD3571E6b9e";
   const signer = getSigner();
-  const coin = NaughtyCoin__factory.connect(instanceAddress, signer);
+  const level = await createLevel(signer, "Naught Coin");
+  const coin = NaughtyCoin__factory.connect(level, signer);
   await coin.deployed();
 
   const player = await coin.player();
@@ -19,7 +20,7 @@ async function main() {
   console.log(`Balance: ${balance}`);
 
   console.log("deploy NaughtyCoinAttacker");
-  const attacker = await (new NaughtyCoinAttacker__factory(signer)).deploy(instanceAddress);
+  const attacker = await (new NaughtyCoinAttacker__factory(signer)).deploy(level);
   await attacker.deployed();
   console.log("attacker:", attacker.address);
   // give attacker the right
@@ -32,7 +33,7 @@ async function main() {
   console.log("contract balances:", await coin.balanceOf(attacker.address));
   // The goal is to get all balance of player to 0.
   // So we do not care if contract transfer money to other or not.
-
+  await submitLevel(signer, level);
 }
 
 main()

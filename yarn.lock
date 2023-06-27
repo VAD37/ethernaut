@@ -637,10 +637,10 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@openzeppelin/contracts@^4.5.0":
-  version "4.5.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.5.0.tgz#3fd75d57de172b3743cdfc1206883f56430409cc"
-  integrity sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==
+"@openzeppelin/contracts@^4.7`.0":
+  version "4.8.0-rc.2"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.8.0-rc.2.tgz#52343ab70bc24e75cc10e4bc1dd6dedfe557642c"
+  integrity sha512-nDCPHAfkg4l/LhuPQSCjehGGQ8SPlsIuYVmr0weT9dLyXCAr3gAfCe27wZG7Zb1G90Yfgaz5xRXlYY/cIBLCVw==
 
 "@remix-project/remixd@^0.5.6":
   version "0.5.6"

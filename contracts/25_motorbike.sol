@@ -366,7 +366,7 @@ contract AttackMotorBike is Initializable {
         selfdestruct(msg.sender);
     }
 }
-
+// This is ethernaut answer
 contract MotorbikeAttack {
 
     // Address of current implementation (The Engine)

